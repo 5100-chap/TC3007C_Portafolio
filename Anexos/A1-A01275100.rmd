@@ -1,0 +1,72 @@
+---
+title: "A1-La Normal Multivariada"
+author: |
+  **Diego Alberto Baños Lopez**  
+  **A01275100**
+date: "2023-09-19"
+output: pdf_document
+---
+
+``` {r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  tidy.opts = list(width.cutoff = 60), tidy = TRUE
+)
+```
+
+## Calculo
+
+Hallar el procedimiento para el cálculo de probabilidad de que $P(X_1 <= 2, X_2 <= 3)$ con $X_1, X_2$ se distribuyen Normal con
+![](./Formula_para_actividad.png){width=35% height=15%}
+
+```{r}
+# Importacion de librerias
+library(mnormt)
+library(MVN)
+library(MASS)
+```
+```{r}
+x <- c(2, 3)
+mu <- c(2.5, 4)
+sigma <- matrix(c(1.2, 0, 0, 2.3), nrow = 2)
+
+# Calcular la probabilidad acumulada
+prob <- pmnorm(x, mu, sigma)
+print(prob)
+```
+
+## Parte de grafica
+
+### Grafica distribución multivariada
+```{r}
+# Definir el rango para 4 desviaciones estándar alrededor de la media
+x <- seq(-2, 7, 0.1)
+y <- seq(0, 8, 0.1)
+
+f <- function(x, y) dmnorm(cbind(x, y), mu, sigma)
+z <- outer(x, y, f)
+
+# Crear gráfico de superficie
+persp(x, y, z,
+  theta = -30,
+  phi = 25, expand = 0.6, ticktype = "detailed", col = "pink"
+)
+```
+
+
+### Grafica contornos de la anterior distribución multivariada
+```{r}
+# Crear gráfico de contorno
+contour(x, y, z, col = "blue", levels = c(0.01, 0.03, 0.05, 0.07, 0.09))
+```
+
+
+
+## Interpretación
+
+* ¿Cómo se relaciona el resultado del primer inciso con el segundo? 
+  
+  El grafico 3D representa la proporción del volumen bajo la superficie de la distribución multivariada que se encuentra dentro del rango definido por $P(X_1 <= 2, X_2 <= 3)$
+* ¿Cómo se relacionan los gráficos de los incisos 2 y 3?
+  
+  Mientras que el gráfico 3D muestra la "altura" o densidad de la distribución, el gráfico de contorno muestra la densidad a través de contornos en el plano (x, y)

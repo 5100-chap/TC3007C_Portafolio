@@ -1,0 +1,92 @@
+---
+title: "A4 - Regresión Poisson"
+author: |
+  **Diego Alberto Baños Lopez**  
+  **A01275100**
+date: "2023-10-13"
+output: pdf_document
+---
+
+``` {r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  tidy.opts = list(width.cutoff = 60), tidy = TRUE
+)
+```
+
+``` {r}
+library(datasets)
+data <- warpbreaks
+head(data, 10)
+```
+
+## Histograma
+``` {r}
+hist(data$breaks, main = "Histograma de Rupturas", xlab = "Número de Rupturas")
+```
+
+## Media y varianza
+``` {r}
+mean_breaks <- mean(data$breaks)
+var_breaks <- var(data$breaks)
+print(mean_breaks)
+print(var_breaks)
+```
+
+## Modelo Poisson
+``` {r}
+poisson_model <- glm(breaks ~ wool + tension,
+  data = data, family = poisson(link = "log")
+)
+summary(poisson_model)
+```
+
+## Interpretación del Modelo Poisson
+
+En cuanto a este modelo los coeficientes estimados indican cómo las variables wool y tension afectan el número de rupturas de urdimbre:
+
+* Tipo de lana (wool): La lana del tipo B está asociada con una disminución en el número de rupturas, con un coeficiente estimado de -0.206 (p < 0.001). Esto sugiere que el tipo de lana B podría ser más resistente a las rupturas en comparación con la lana A (que es la categoría de referencia).
+* Nivel de tensión (tension): Los niveles de tensión media y alta están asociados con disminuciones en el número de rupturas, con coeficientes estimados de -0.321 (p < 0.001) y -0.518 (p < 0.001), respectivamente. Esto indica que aumentar la tensión puede resultar en menos rupturas, aunque esto podría ser contraintuitivo y requeriría una investigación adicional.
+
+La desviación residual es de 210.39 con 50 grados de libertad, lo que sugiere que hay una dispersión que no es capturada por el modelo. La desviación nula es de 297.37, lo que indica la desviación del modelo sin predictoras frente al modelo con predictoras.
+
+
+
+## Modelo Cuasi Poisson
+```{r}
+poisson_model2 <- glm(breaks ~ wool + tension,
+  data = data, family = quasipoisson(link = "log")
+)
+summary(poisson_model2)
+```
+
+
+## Interpretación del Modelo Cuasi Poisson
+
+El modelo Cuasi Poisson también revela una relación similar entre las variables predictoras y el número de rupturas, aunque con errores estándar más grandes debido a la dispersión adicional considerada:
+
+* Tipo de lana (wool): La lana del tipo B sigue estando asociada con una disminución en el número de rupturas, aunque ahora el p-valor es 0.059, lo que sugiere que esta relación es menos significativa en el modelo Cuasi Poisson.
+* Nivel de tensión (tension): Los niveles de tensión media y alta siguen estando asociados con disminuciones en el número de rupturas, con p-valores significativos.
+
+El parámetro de dispersión para la familia quasipoisson es 4.2615, lo que indica una dispersión mayor que la suposición de Poisson. Esta dispersión adicional es una indicación de la variabilidad extra no capturada por el modelo Poisson, lo que justifica la consideración del modelo Cuasi Poisson.
+
+## Evaluación de la Dispersión
+```{r}
+res_dev <- poisson_model$deviance
+df <- poisson_model$df.residual
+print(res_dev)
+print(df)
+res_dev <- poisson_model2$deviance
+df <- poisson_model2$df.residual
+print(res_dev)
+print(df)
+```
+La desviación residual y los grados de libertad son los mismos en ambos modelos, esto sugiere que hay una dispersión no capturada por los modelos 
+
+## Evaluación de la Desviación Nula Excesiva
+```{r}
+null_dev <- poisson_model$null.deviance
+print(null_dev)
+null_dev <- poisson_model2$null.deviance
+print(null_dev)
+```

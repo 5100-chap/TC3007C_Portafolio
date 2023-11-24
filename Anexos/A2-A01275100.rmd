@@ -1,0 +1,130 @@
+---
+title: "A2-Componentes Principales"
+author: |
+  **Diego Alberto Baños Lopez**  
+  **A01275100**
+date: "2023-09-28"
+output: pdf_document
+---
+
+``` {r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  tidy.opts = list(width.cutoff = 60), tidy = TRUE
+)
+```
+
+# Parte I
+A partir de los datos sobre indicadores económicos y sociales de 96 países hacer una análisis de Componentes principales a partir de la  matriz de varianzas-covarianzas y otro a partir de la matriz de correlaciones , comparar los resultados y argumentar cuál es mejor según los resultados obtenidos.
+
+1. Cargar los datos y calcular las matrices de varianza-covarianza S con cov(X) y la matriz de correlaciones con cor(X)
+```{r}
+M <- read.csv("paises_mundo.csv")
+# Matriz de varianzas-covarianzas
+cov_matrix <- cov(M)
+# Matriz de correlaciones
+cor_matrix <- cor(M)
+```
+2. Calcular los valores y vectores propios de cada matriz.
+```{r}
+vec_cov <- eigen(cov_matrix)
+vec_cor <- eigen(cor_matrix)
+```
+3. Calcular la proporción de varianza explicada por cada componente. 
+```{r}
+var_cov <- vec_cov$values / sum(diag(cov_matrix))
+var_cor <- vec_cor$values / sum(diag(cor_matrix))
+```
+4. Acumule los resultados anteriores. 
+```{r}
+cumsum_cov <- cumsum(var_cov)
+cumsum_cor <- cumsum(var_cor)
+```
+
+```{r, echo = FALSE}
+print("----------------------------------------------------------------")
+print("Usando matriz de varianza-covarianza:")
+print("----------------------------------------------------------------")
+print("Vectores propios:")
+print(vec_cov)
+print("----------------------------------------------------------------")
+print("Proporción de varianza explicada por cada componente:")
+print(var_cov)
+print("----------------------------------------------------------------")
+print("Varianza acumulada por cada componente:")
+print(cumsum_cov)
+print("----------------------------------------------------------------")
+print("Usando matriz de correlaciones:")
+print("----------------------------------------------------------------")
+print("Vectores propios:")
+print(vec_cor)
+print("----------------------------------------------------------------")
+print("Proporción de varianza explicada por cada componente:")
+print(var_cor)
+print("----------------------------------------------------------------")
+print("Varianza acumulada por cada componente:")
+print(cumsum_cor)
+print("----------------------------------------------------------------")
+```
+5. Según los resultados anteriores
+   1. ¿Qué componentes son los más importantes? 
+      1. Matriz de varianza-covarianza:
+         1. Los dos primeros componentes son los más importantes. El primero explica aproximadamente el 90.3% de la varianza, mientras que el segundo explica aproximadamente el 9.6%
+      2. Matriz de correlaciones:
+         1. Los dos primeros componentes también son los más significativos, pero con proporciones menores. El primero explica el 36.6% de la varianza y el segundo el 17.5%.
+   2. ¿Qué variables son las que más contribuyen a la primera y segunda componentes principales? 
+      1. Se identifican observando los valores más altos en magnitud en las columnas [,1] y [,2] de los vectores propios para ambas matrices.
+   3. ¿Por qué lo dice? 
+      1. Los vectores propios indican la dirección de máxima varianza. Las variables con coeficientes más altos en estos vectores son las más contribuyentes.
+   4. ¿Influyen las unidades de las variables?
+      1. Matriz de varianza-covarianza:
+         1. Sí, las unidades de las variables influyen. Las variables con valores más grandes pueden dominar el análisis.
+      2. Matriz de correlaciones:
+         1. No, porque al usar la matriz de correlaciones, todas las variables se estandarizan para tener una varianza de 1.
+   
+6. Compare los resultados. ¿qué concluye?
+   1. Al comparar los resultados, se puede observar que la matriz de varianza-covarianza y la matriz de correlaciones dan diferentes proporciones de varianza explicada para las componentes principales. Esto se debe a que la matriz de correlaciones estandariza las variables, mientras que la matriz de varianza-covarianza no.
+
+# Parte II
+
+* Obtenga las gráficas de respectivas con S (matriz de varianzas-covarianzas) y con R (matriz de correlaciones) de las dos primeras componentes e interprete los resultados en término de agrupación de variables
+```{r}
+library(stats)
+library(ggplot2)
+library(FactoMineR)
+library(factoextra)
+cpS <- princomp(M, cor = FALSE)
+cpaS <- as.matrix(M) %*% cpS$loadings
+plot(cpaS[, 1], cpaS[, 2],
+  type = "p", main = "Componentes Principales de la matriz S",
+  xlab = "Componente 1", ylab = "Componente 2"
+)
+text(cpaS[, 1], cpaS[, 2], labels = row.names(M))
+biplot(cpS)
+cpR <- princomp(M, cor = TRUE)
+cpaR <- as.matrix(M) %*% cpR$loadings
+plot(cpaR[, 1], cpaR[, 2],
+  type = "p", main = "Componentes Principales de la matriz R",
+  xlab = "Componente 1", ylab = "Componente 2"
+)
+text(cpaR[, 1], cpaR[, 2], labels = row.names(M))
+biplot(cpR, scale = 0)
+```
+
+Las gráficas de dispersión de las dos primeras componentes principales, tanto para la Matriz S como para la Matriz R, muestran cómo se agrupan los países según las características económicas y sociales que se analizan. El componente 1 es el principal contribuyente a esta estructura, y el componente 2 la complementa. Un grupo de países en la esquina superior derecha de la gráfica de la Matriz R comparte características comunes, indicando una asociación positiva entre los indicadores representados por ambas componentes. En general, los países con valores altos en una componente tienden a tener valores altos en la otra, revelando correlaciones sistemáticas entre ciertos indicadores en los países analizados.
+
+# Parte III
+
+* Explore los siguientes gráficos relativos al problema y Componentes Principales y dé una interpretación de cada gráfico. 
+```{r}
+cp3 <- PCA(M)
+fviz_pca_ind(cp3, col.ind = "blue", addEllipses = TRUE, repel = TRUE)
+fviz_screeplot(cp3)
+fviz_contrib(cp3, choice = c("var"))
+```
+
+* Gráfica de Individuos (PCA Individual Plot): Muestra la distribución de países según las dos primeras componentes principales. Los países cercanos entre sí tienen perfiles socioeconómicos similares, mientras que los dispersos presentan mayor variabilidad en sus indicadores.
+
+* Gráfica de Scree Plot (Gráfica de Codo): Representa la varianza explicada por cada componente principal. La primera componente es la más relevante, seguida de la segunda, y su relevancia disminuye con las componentes subsiguientes.
+
+* Gráfica de Contribuciones de Variables: Indica la influencia de cada variable en las dos primeras componentes principales. Las variables cercanas a las componentes tienen mayor contribución, mientras que las alejadas contribuyen menos. Esta gráfica destaca las variables más determinantes en la variabilidad de los datos de los países.

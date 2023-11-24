@@ -1,0 +1,90 @@
+---
+title: "A3 - Proceso Poisson"
+author: |
+  **Diego Alberto Baños Lopez**  
+  **A01275100**
+date: "2023-10-03"
+output: pdf_document
+---
+
+``` {r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  tidy.opts = list(width.cutoff = 60), tidy = TRUE
+)
+```
+
+# Drive Thru
+
+El tiempo de llegada a una ventanilla de toma de órdenes desde un automóvil de un cierto comercio de hamburguesas sigue un proceso de Poisson con un promedio de 12 llegadas por hora.
+
+* ¿Cuál será la probabilidad de que el tiempo de espera de tres personas sea a lo más de 20 minutos?
+``` {r}
+lambda <- 12
+n <- 3
+a <- pgamma(1/3, n, lambda)
+a
+```
+* ¿Cuál es la probabilidad de que el tiempo de espera de una persona esté entre 5 y 10 segundos?
+``` {r}
+b <- pexp(10/3600, lambda) - pexp(5/3600, lambda)
+b
+```
+* ¿Cuál será la probabilidad de que en 15 minutos lleguen a lo más tres personas?
+``` {r}
+lambda_2 <- lambda * (15/60)
+c <- ppois(3, lambda_2)
+c
+```
+* ¿Cuál es la probabilidad de que el tiempo de espera de tres personas esté entre 5 y 10 segundos?
+``` {r}
+d <- pgamma(10/3600, n, lambda) - pgamma(5/3600, n, lambda)
+d
+```
+* Determine la media y varianza del tiempo de espera de tres personas.
+``` {r}
+media <- n / lambda
+varianza <- n / lambda^2
+cat(media, "|", varianza)
+```
+* ¿Cuál será la probabilidad de que el tiempo de espera de tres personas exceda una desviación estándar arriba de la media?
+``` {r}
+f <- 1 - pgamma(media + sqrt(varianza), n, lambda)
+f
+```
+
+# Entre partículas
+
+Una masa radioactiva emite partículas de acuerdo con un proceso de Poisson con una razón promedio de 15 partículas por minuto. En algún punto inicia el reloj.
+
+
+* ¿Cuál es la probabilidad de que en los siguientes 3 minutos la masa radioactiva emita 30 partículas?
+``` {r}
+lambda_3min <- 15 * 3
+a_2 <- dpois(30, lambda_3min)
+a_2
+```
+* ¿Cuál es la probabilidad de que transcurran cinco segundos a lo más antes de la siguiente emisión?
+``` {r}
+lambda_1min <- 15
+b_2 <- pexp(5/60, lambda_1min)
+b_2
+```
+* ¿Cuánto es la mediana del tiempo de espera de la siguiente emisión?
+``` {r}
+mediana <- log(2) / lambda_1min
+mediana
+```
+* ¿Cuál es la probabilidad de que transcurran a lo más cinco segundos antes de la segunda emisión?
+``` {r}
+n <- 2
+d_2 <- pgamma(5/60, n, lambda_1min)
+d_2
+```
+* ¿En que rango se encuentra el 50% del tiempo central que transcurre antes de la segunda emisión?
+
+``` {r}
+q1 <- qgamma(0.25, n, lambda_1min)
+q3 <- qgamma(0.75, n, lambda_1min)
+cat("entre ", q1, " y ", q3)
+```
