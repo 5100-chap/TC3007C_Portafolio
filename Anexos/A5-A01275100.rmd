@@ -1,0 +1,173 @@
+---
+title: "A5-Regresión logística"
+author: |
+  **Diego Alberto Baños Lopez**  
+  **A01275100**
+date: "2023-10-18"
+output: pdf_document
+---
+
+``` {r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  tidy.opts = list(width.cutoff = 60), tidy = TRUE
+)
+```
+## Encuentra un modelo logístico para encontrar el mejor conjunto de predictores que auxilien a clasificar la dirección de cada observación.
+### Analisis del dataset
+``` {r}
+# Librerias a usar
+library(ISLR)
+library(tidyverse)
+
+# Para llamar al dataset de manera mas sencilla usamos attach()
+# Asi solo se requiere llamar las columnas
+attach(Weekly)
+
+# Vista previa del dataset
+# Observamos estadisticas y graficas de como se comporta el dataset
+head(Weekly)
+summary(Weekly)
+glimpse(Weekly)
+plot(Weekly)
+pairs(Weekly)
+plot(Volume)
+```
+
+### Coeficiente de correlación
+``` {r}
+cor(Weekly[, -9])
+```
+
+## Formula un modelo logístico con todas las variables menos la variable "Today". Calcula los intervalos de confianza para las $\beta_i$. Detecta variables que influyen y no influyen en el modelo. Interpreta el efecto de la variables en los odds (momios).
+``` {r}
+modelo_log_m <- glm(Direction ~ . - Today, data = Weekly, family = binomial)
+summary(modelo_log_m)
+contrasts(Direction)
+confint(modelo_log_m, level = 0.95)
+```
+
+### Variables significativas
+``` {r}
+ggplot(data = Weekly, mapping = aes(x = Direction, y = Lag2)) +
+  geom_boxplot(aes(color = Direction)) +
+  geom_point(aes(color = Direction)) +
+  theme_bw() +
+  theme(legend.position = "null")
+```
+
+### Analisis
+
+* Solo Lag2 es estadísticamente significativa con un valor p de 0.0275.
+  * En la salida de summary(modelo_log_m) esta marcado con un *
+* Year, Lag1, Lag3, Lag4, Lag5, y Volume no son significativas en el modelo.
+* El intervalo de confianza del 95% para Lag2 es [0.007001418, 0.11291264], lo que sugiere que es un predictor significativo y positivo.
+* Un aumento de una unidad en Lag2 aumenta las odds de que la dirección sea "Up" en aproximadamente 1.061 veces.
+
+
+## Divide la base de datos en un conjunto de entrenamiento (datos desde 1990 hasta 2008) y de prueba (2009 y 2010). Ajusta el modelo encontrado.
+
+### Division de la base de datos
+```{r}
+datos_entrenamiento <- (Year < 2009)
+datos_test <- Weekly[!datos_entrenamiento, ]
+```
+
+## Formula el modelo logístico sólo con las variables significativas en la base de entrenamiento.
+
+### Ajuste del modelo con variables significativas
+
+```{r}
+modelo_log_s <- glm(Direction ~ Lag2,
+  data = Weekly,
+  family = binomial, subset = datos_entrenamiento
+)
+
+summary(modelo_log_s)
+```
+
+## Representa gráficamente el modelo
+```{r}
+#  Vector con nuevos valores interpolados en el rango del predictor Lag2:
+nuevos_puntos <- seq(
+  from = min(Weekly$Lag2), to = max(Weekly$Lag2),
+  by = 0.5
+)
+
+# Predicción de los nuevos puntos según el modelo con el comando predict()
+
+predicciones <- predict(modelo_log_s, newdata = data.frame(
+  Lag2 =
+    nuevos_puntos
+), se.fit = TRUE, type = "response")
+
+
+# Límites del intervalo de confianza (95%) de las predicciones
+CI_inferior <- predicciones$fit - 1.96 * predicciones$se.fit
+CI_superior <- predicciones$fit + 1.96 * predicciones$se.fit
+# Matriz de datos con los nuevos puntos y sus predicciones
+datos_curva <- data.frame(
+  Lag2 = nuevos_puntos, probabilidad =
+    predicciones$fit, CI.inferior = CI_inferior, CI.superior = CI_superior
+)
+
+# Codificación 0,1 de la variable respuesta Direction
+Weekly$Direction <- ifelse(Weekly$Direction == "Down", yes = 0, no = 1)
+
+ggplot(Weekly, aes(x = Lag2, y = Direction)) +
+  geom_point(aes(color = as.factor(Direction)), shape = "I", size = 3) +
+  geom_line(data = datos_curva, aes(y = probabilidad), color = "firebrick") +
+  geom_line(data = datos_curva, aes(y = CI.superior), linetype = "dashed") +
+  geom_line(data = datos_curva, aes(y = CI.inferior), linetype = "dashed") +
+  labs(
+    title = "Modelo logístico Direction ~ Lag2",
+    y = "P(Direction = Up | Lag2)", x = "Lag2"
+  ) +
+  scale_color_manual(labels = c("Down", "Up"), values = c("blue", "red")) +
+  guides(color = guide_legend("Direction")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_bw()
+```
+
+## Evalúa el modelo con las pruebas de verificación correspondientes (Prueba de chi cuadrada, matriz de confusión)
+```{r}
+# Usando Chi Cuadrada
+anova(modelo_log_s, test = "Chisq")
+
+# Usando Matriz de confusión
+
+# Cálculo de la probabilidad predicha por el modelo con los datos de test
+prob_modelo <- predict(modelo_log_s, newdata = datos_test, type = "response")
+# Vector de elementos “Down”
+pred_modelo <- rep("Down", length(prob_modelo))
+# Sustitución de “Down” por “Up” si la p > 0.5
+pred_modelo[prob_modelo > 0.5] <- "Up"
+Direction_0910 <- Direction[!datos_entrenamiento]
+# Matriz de confusión
+matriz_confusion <- table(pred_modelo, Direction_0910)
+matriz_confusion
+library(vcd)
+mosaic(matriz_confusion,
+  shade = T, colorize = T,
+  gp = gpar(fill = matrix(c("green3", "red2", "red2", "green3"), 2, 2))
+)
+mean(pred_modelo == Direction_0910)
+# Coeficientes del modelo
+coeficientes <- coef(modelo_log_s)
+```
+## Ecuación de modelo
+```{r}
+cat(
+  "Ecuación del modelo: logit(P(Up)) =",
+  coeficientes[1], "+", coeficientes[2], "* Lag2", "\n"
+)
+```
+De igual forma podria ser escrito como:
+$\log\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 \times \text{Lag2}$
+
+En resumen del conjunto de datos se puede observar que entre el rendimiento de las semanas
+(Lag1 a Lag6) asi como el año (Year) y el volumen (Volume) Lag2 es eles (Volumeue demuestra ser un valor significativo para las predicciones del mercado, en que dirección del se moveran acorde al rendimiento de Lag2.
+
+Esto quiere decir que si Lag2 aumenta, la dirección del mercado tendra la tendencia de estar hacia arriba (Up).
+
+Este modelo puede ser de gran ayuda para en primera instancia saber como se comportara el S&p500, no obstante se recomienda no confiar del 100% del modelo ya que este puede no tener previsto otros factores que puedan afectar la bolsa, asi como se recomienda hacer otros analisis y verificaciones
