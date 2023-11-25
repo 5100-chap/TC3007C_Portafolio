@@ -11,7 +11,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#Analizar los pronósticos en series de tiempo
+# Analizar los pronósticos en series de tiempo
 
 ## Problema # 1
 
@@ -34,29 +34,32 @@ y <- c(17, 21, 19, 23, 18, 16, 20, 18, 22, 20, 15, 22)
     * Crea un programa que te permita evaluar varios valores de $\alpha$ en el método de suavizamiento exponencial hasta encontrar el valor de $\alpha$ que minimice el CME.
 
 ```{r}
-# Promedios móviles
-p <- NA
-e <- NA
-for (i in 1:(length(y) - 2)) {
-  p[i + 2] <- (y[i] + y[i + 1] + y[i + 2]) / 3
-  e[i + 2] <- p[i + 2] - y[i + 2]
+# Función para calcular el suavizamiento con promedios móviles
+suavizado_promedios_moviles <- function(y) {
+  n <- length(y)
+  p <- rep(NA, n)
+  e <- rep(NA, n)
+
+  for (i in 1:(n - 2)) {
+    p[i + 2] <- mean(y[i:(i + 2)])
+    e[i + 2] <- p[i + 2] - y[i + 2]
+  }
+
+  return(list(promedios = p, errores = e))
 }
-# Promedios móviles ponderados
-p2 <- NA
-e2 <- NA
-for (i in 1:(length(y) - 2)) {
-  p2[i + 2] <- (1 / 6) * y[i] + (2 / 6) * y[i + 1] + (3 / 6) * y[i + 2]
-  e2[i + 2] <- p2[i + 2] - y[i + 2]
-}
-# Metodo de suavizado especial
-p3 <- NA
-e3 <- NA
-p3[1] <- y[1]
-p3[2] <- y[1]
-a <- 0.20
-for (i in 3:length(y)) {
-  p3[i] <- a * y[i - 1] + (1 - a) * p3[i - 1]
-  e3[i] <- y[i] - p3[i]
+
+# Función para calcular el suavizamiento con promedios móviles ponderados
+suavizado_promedios_moviles_ponderados <- function(y) {
+  n <- length(y)
+  p <- rep(NA, n)
+  e <- rep(NA, n)
+
+  for (i in 1:(n - 2)) {
+    p[i + 2] <- (1 / 6) * y[i] + (2 / 6) * y[i + 1] + (3 / 6) * y[i + 2]
+    e[i + 2] <- p[i + 2] - y[i + 2]
+  }
+
+  return(list(promedios = p, errores = e))
 }
 
 # Función para calcular el suavizamiento exponencial
@@ -69,16 +72,80 @@ suavizado_exponencial <- function(y, alpha) {
   return(s)
 }
 
+# Aplica Promedios Móviles
+resultado_pm <- suavizado_promedios_moviles(y)
+CME_pm <- mean(resultado_pm$errores^2, na.rm = TRUE)
+
+resultado_pm
+CME_pm
+
+# Aplica Promedios Móviles Ponderados
+resultado_pmp <- suavizado_promedios_moviles_ponderados(y)
+CME_pmp <- mean(resultado_pmp$errores^2, na.rm = TRUE)
+
+resultado_pmp
+CME_pmp
+
+# Aplica Suavizamiento Exponencial y Encontrar el Mejor alpha
+alpha_values <- seq(0.01, 1, by = 0.01)
+CME_alpha <- sapply(alpha_values, function(a) {
+  s <- suavizado_exponencial(y, a)
+  mean((y - s)^2, na.rm = TRUE)
+})
+best_alpha <- alpha_values[which.min(CME_alpha)]
+CME_se <- min(CME_alpha)
+
+best_alpha
+CME_se
+
+# Gráficos para Promedios Móviles
+plot(t, y, type = "o", col = "red")
+lines(t, resultado_pm$promedios, type = "o", col = "blue")
+
+# Gráficos para Promedios Móviles Ponderados
+plot(t, y, type = "o", col = "red")
+lines(t, resultado_pm$promedios, type = "o", col = "blue")
+
+# Aplica Suavizamiento Exponencial
+s <- suavizado_exponencial(y, best_alpha)
+
+# Gráfico para Suavizamiento Exponencial
+plot(t, y, type = "o", col = "red")
+lines(t, s, type = "o", col = "blue")
 
 ```
 
 
 * Concluye sobre cuál de los modelos usados es el mejor
 
-Predice cuáles son las ventas de gasolina esperadas para la semana 13 con el mejor método que hayas obtenido. 
+Podemos comparar los CMEs de cada modelo y asi definir cual es el mejor modelo para esta situación
+```{r}
+# Comparar CME de los tres métodos y el mejor valor de alpha
+CMEs <- c(CME_pm, CME_pmp, CME_se)
+modelos <- c("Promedios Móviles", "Promedios Móviles Ponderados", "Suavizamiento Exponencial")
+
+# Obtener el índice del modelo con el CME más bajo
+mejor_modelo <- which.min(CMEs)
+
+# Imprimir el resultado
+cat("El mejor modelo es:", modelos[mejor_modelo], "\n")
+cat("CME:", CMEs[mejor_modelo], "\n")
+
+```
+
+* Predice cuáles son las ventas de gasolina esperadas para la semana 13 con el mejor método que hayas obtenido. 
 
 ```{r}
+pesos <- t/sum(t)
+
+# Calcular el promedio móvil ponderado
+promedio_movil_ponderado <- sum(y * pesos)
+
+# La predicción para la semana 13 es el promedio móvil ponderado
+prediccion_semana_13 <- promedio_movil_ponderado
+prediccion_semana_13
 ```
+
 
 ## Problema # 2
 
@@ -138,3 +205,5 @@ pronostico_exponencial_19_sept <- tail(suavizados_exponenciales, 1)
 pronostico_exponencial_19_sept
 ```
 c. ¿Cuál de los dos métodos prefiere? ¿Por qué?
+
+En base a lo anterior y sabiendo que en este ejemplo estamos hablando de un escenario de cambios volaties, en donde puede haber cambios abruptos entre valores, se prefiere usar el suavizado exponencial, ya que este método suele ser bastante adaptable y flexible a los cambios en los datos, por lo que se puede ajustar mejor a los cambios en los datos.
