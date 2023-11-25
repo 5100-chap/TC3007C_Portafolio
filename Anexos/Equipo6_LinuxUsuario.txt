@@ -1,0 +1,83 @@
+(base) [upijijis@upijijis-x570A ~]$ ssh root@146.190.32.150
+The authenticity of host '146.190.32.150 (146.190.32.150)' can't be established.
+ED25519 key fingerprint is SHA256:udDDhUpBoD8tTR6dX8C1DJJ788KwyX0OdHChtpwXNCA.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '146.190.32.150' (ED25519) to the list of known hosts.
+root@146.190.32.150's password: 
+Welcome to Ubuntu 23.04 (GNU/Linux 6.2.0-32-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  System information as of Thu Oct 26 20:47:50 UTC 2023
+
+  System load:  0.0                Processes:             98
+  Usage of /:   23.6% of 48.30GB   Users logged in:       0
+  Memory usage: 18%                IPv4 address for eth0: 146.190.32.150
+  Swap usage:   0%                 IPv4 address for eth0: 10.48.0.5
+
+22 updates can be applied immediately.
+5 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+
+*** System restart required ***
+Last login: Tue Oct 24 14:35:53 2023 from 131.178.102.144
+(base) root@ubuntu-s-1vcpu-2gb-sfo3-01:~# neofetch
+Command 'neofetch' not found, but can be installed with:
+apt install neofetch
+(base) root@ubuntu-s-1vcpu-2gb-sfo3-01:~# adduser a01275100
+Adding user `a01275100' ...
+Adding new group `a01275100' (1006) ...
+Adding new user `a01275100' (1006) with group `a01275100 (1006)' ...
+Creating home directory `/home/a01275100' ...
+Copying files from `/etc/skel' ...
+New password: 
+Retype new password: 
+passwd: password updated successfully
+Changing the user information for a01275100
+Enter the new value, or press ENTER for the default
+        Full Name []: Diego Alberto Banios Lopez
+        Room Number []: 1275100
+        Work Phone []: 1275100
+        Home Phone []: 1275100
+        Other []: none
+Is the information correct? [Y/n] Y
+Adding new user `a01275100' to supplemental / extra groups `users' ...
+Adding user `a01275100' to group `users' ...
+(base) root@ubuntu-s-1vcpu-2gb-sfo3-01:~# exit
+logout
+Connection to 146.190.32.150 closed.
+(base) [upijijis@upijijis-x570A ~]$ ssh a01275100@146.190.32.150
+a01275100@146.190.32.150's password: 
+Welcome to Ubuntu 23.04 (GNU/Linux 6.2.0-32-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  System information as of Thu Oct 26 20:50:40 UTC 2023
+
+  System load:  0.0                Processes:             95
+  Usage of /:   23.6% of 48.30GB   Users logged in:       0
+  Memory usage: 18%                IPv4 address for eth0: 146.190.32.150
+  Swap usage:   0%                 IPv4 address for eth0: 10.48.0.5
+
+22 updates can be applied immediately.
+5 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+
+*** System restart required ***
+
+The programs included with the Ubuntu system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
+applicable law.
+
+a01275100@ubuntu-s-1vcpu-2gb-sfo3-01:~$ ls
+a01275100@ubuntu-s-1vcpu-2gb-sfo3-01:~$ 
